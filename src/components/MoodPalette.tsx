@@ -1,0 +1,2 @@
+import type {CSSProperties} from 'react';import { MOODS,type MoodId } from '../types/audiomood';
+export function MoodPalette({selected,onSelect,disabled}:{selected?:MoodId;onSelect:(m:MoodId)=>void;disabled:boolean}){return <section className="mood-palette"><p>QU’EST-CE QUE CE SON TE FAIT ?</p><div>{MOODS.map(m=><button disabled={disabled} className={selected===m.id?'selected':''} style={{'--mood':m.primary} as CSSProperties} key={m.id} onClick={()=>onSelect(m.id)}><span>{m.emoji}</span>{m.label}</button>)}</div></section>}
