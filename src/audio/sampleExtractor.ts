@@ -1,0 +1,8 @@
+import type { Analysis,AudioMoodSample,SampleKind } from '../types/audiomood';
+const clamp=(v:number,a:number,b:number)=>Math.max(a,Math.min(b,v));
+export function extractSample(markerId:string,time:number,duration:number,a:Analysis):AudioMoodSample{
+ const at=clamp(Math.round(time/a.frameDuration),0,a.rms.length-1),radius=Math.round(4/a.frameDuration);let onset=at,best=0;for(let i=Math.max(1,at-radius);i<=at;i++)if(a.flux[i]>best){best=a.flux[i];onset=i}const localFlux=a.flux.slice(Math.max(0,at-8),Math.min(a.flux.length,at+9));const flux=Math.max(...localFlux,0),rms=a.rms[at]||a.globalRms;const type:SampleKind=flux>a.globalRms*.75?'oneShot':flux<a.globalRms*.18?'loop':'phrase',naturalOnset=onset*a.frameDuration;let start=clamp(Math.abs(naturalOnset-(time-2))<1?naturalOnset:time-2,0,Math.max(0,duration-4)),end=Math.min(duration,start+4);
+ if(end-start<4)start=Math.max(0,end-4);
+ let loop:AudioMoodSample['loop'];if(type==='loop'){const candidates=[.8,1.2,1.5,2,3,4].filter(v=>start+v<=duration);let chosen=candidates[0]||Math.min(2,end-start),score=Infinity;for(const d of candidates){const x=Math.round(start/a.frameDuration),y=Math.min(a.rms.length-1,Math.round((start+d)/a.frameDuration)),s=Math.abs(a.rms[x]-a.rms[y])+a.flux[y]*2;if(s<score){score=s;chosen=d}}end=start+chosen;loop={start,end,crossfade:Math.min(.06,chosen*.04)}}
+ const low=a.bands[0][at]||0,mid=a.bands[1][at]||0,high=a.bands[2][at]||0,total=low+mid+high||1;return{id:crypto.randomUUID(),markerId,sourceStart:start,sourceEnd:end,duration:end-start,type,audioFeatures:{rms,low,mid,high,centroid:(mid+high*2)/total,flux},visualSeed:Math.random()*10000,loop};
+}

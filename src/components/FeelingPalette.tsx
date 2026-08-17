@@ -1,2 +1,0 @@
-import { FEELINGS, type Feeling } from '../types/emosound';
-export function FeelingPalette({onStart,onEnd}:{onStart:(f:Feeling)=>void;onEnd:(f:Feeling)=>void}) { return <section className="palette" aria-label="Mes ressentis"><p>QU'EST-CE QUE CE SON TE FAIT ?</p><div>{FEELINGS.map(f=><button key={f.id} onPointerDown={e=>{e.currentTarget.setPointerCapture(e.pointerId);onStart(f.id)}} onPointerUp={()=>onEnd(f.id)} onPointerCancel={()=>onEnd(f.id)}><span>{f.emoji}</span>{f.label}</button>)}</div></section> }
