@@ -8,6 +8,7 @@ export interface PerformanceEvent{time:number;sampleId:string;action:'play'|'sto
 export interface AudioMoodPerformance{id:string;name:string;duration:number;events:PerformanceEvent[]}
 export interface AudioMoodProject{id:string;audioName:string;duration:number;markers:MoodMarker[];samples:AudioMoodSample[];performance?:AudioMoodPerformance}
 export interface Analysis{bands:[Float32Array,Float32Array,Float32Array];rms:Float32Array;flux:Float32Array;frameDuration:number;gain:number;globalRms:number;peak:number;dynamicRange:number}
+export interface SoundBerry extends AudioMoodSample{sourceTime:number;branchId:string;position:{x:number;y:number};state:'hidden'|'seen'|'picked'}
 export const SENSORY_VERBS:SensoryGrammar[]=[
  {id:'berce',emoji:'🫧',label:'BERCE',prompt:'Ça me berce',primary:'#65d9df',secondary:'#b9f5eb',accent:'#79aef5',attack:.045,release:.012},
  {id:'petille',emoji:'✨',label:'PÉTILLE',prompt:'Ça pétille en moi',primary:'#ffd75e',secondary:'#ff997e',accent:'#fff2ae',attack:.22,release:.055},

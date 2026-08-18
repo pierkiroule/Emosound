@@ -1,2 +1,16 @@
-import{useEffect,useState}from'react';import{StartScreen}from'./components/StartScreen';import{ListeningView}from'./components/ListeningView';import{MixView}from'./components/MixView';import{analyseAudio}from'./audio/audioAnalysis';import{extractSample}from'./audio/sampleExtractor';import{useAudioPlayer}from'./hooks/useAudioPlayer';import{loadProject,saveProject}from'./storage/projectStorage';import type{Analysis,AudioMoodProject,SensoryVerb}from'./types/audiomood';
-export default function App(){const restored=loadProject(),[project,setProject]=useState<AudioMoodProject|null>(null),[analysis,setAnalysis]=useState<Analysis>(),[view,setView]=useState<'listen'|'feel'>('listen'),[loading,setLoading]=useState(false),player=useAudioPlayer();const load=async(file:File)=>{setLoading(true);try{const buffer=await player.engine.load(await file.arrayBuffer()),data=analyseAudio(buffer),reuse=restored?.audioName===file.name&&Math.abs(restored.duration-buffer.duration)<1;setProject(reuse?{...restored,markers:restored.markers.slice(0,3),samples:restored.samples.slice(0,3)}:{id:crypto.randomUUID(),audioName:file.name,duration:buffer.duration,markers:[],samples:[]});setAnalysis(data)}catch{alert('Ce paysage sonore ne peut pas être ouvert ici.')}finally{setLoading(false)}};useEffect(()=>{if(project)saveProject(project)},[project]);const capture=(time:number)=>{if(!project||!analysis||project.samples.length>=3)return'';const id=crypto.randomUUID(),safeTime=Math.min(project.duration,Math.max(0,time)),sample=extractSample(id,safeTime,project.duration,analysis),marker={id,time:safeTime,sampleId:sample.id};setProject({...project,markers:[...project.markers,marker],samples:[...project.samples,sample]});return id};const remove=(id:string)=>setProject(p=>p&&({...p,markers:p.markers.filter(m=>m.id!==id),samples:p.samples.filter(s=>s.markerId!==id)}));const customize=(id:string,sensoryVerb:SensoryVerb)=>setProject(p=>p&&({...p,samples:p.samples.map(s=>s.id===id?{...s,sensoryVerb}:s)}));return <>{!project||!analysis?<StartScreen onFile={load} restored={restored?.audioName}/>:view==='listen'?<ListeningView project={project} analysis={analysis} player={player} onCapture={capture} onDelete={remove} onNext={()=>{player.engine.pause();player.setPlaying(false);setView('feel')}}/>:<MixView samples={project.samples} engine={player.engine} onCustomize={customize} onBack={()=>{player.engine.stopAll();setView('listen')}}/>}{loading&&<div className="loading"><i/><span>Le son prend forme…</span></div>}</>}
+import {useState} from 'react';
+import {StartScreen} from './components/StartScreen';
+import {BushExperience} from './components/BushExperience';
+import {analyseAudio} from './audio/audioAnalysis';
+import {detectBerries} from './bush/berryDetector';
+import {useAudioPlayer} from './hooks/useAudioPlayer';
+import type {Analysis,SoundBerry} from './types/audiomood';
+
+export default function App(){
+ const [analysis,setAnalysis]=useState<Analysis>();
+ const [berries,setBerries]=useState<SoundBerry[]>([]);
+ const [loading,setLoading]=useState(false);
+ const player=useAudioPlayer();
+ const load=async(file:File)=>{setLoading(true);try{const buffer=await player.engine.load(await file.arrayBuffer());const next=analyseAudio(buffer);setAnalysis(next);setBerries(detectBerries(buffer.duration,next));}catch{alert('Ce paysage sonore ne peut pas être ouvert ici.')}finally{setLoading(false)}};
+ return <>{analysis?<BushExperience analysis={analysis} berries={berries} setBerries={setBerries} engine={player.engine}/>:<StartScreen onFile={load}/>} {loading&&<div className="loading"><i/><span>Le BuisSon pousse…</span></div>}</>;
+}
